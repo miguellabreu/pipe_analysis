@@ -25,6 +25,7 @@ file.*
 *.mlv
 *.dbb
 *.set
+*.mac
 
 # Python related
 __pycache__/
