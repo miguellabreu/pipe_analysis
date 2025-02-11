@@ -1,0 +1,106 @@
+!!!!!!!!!!!!!!!!! Parameters !!!!!!!!!!!!!!!!!
+rho_s = 7000.d0 ! riser density kg/m3
+L_s= 30.d0      ! riser length 30m
+De_s = 0.20d0   ! riser outer diameter 20mm
+Di_s = 0.12d0   ! riser inner diameter   
+E_s = 100.0d9   ! riser Young modulus
+
+Thic_riser = (De_s - Di_s)/2
+
+pi=3.1416
+A_s = 0.25*pi*(De_s**2 - Di_s**2)
+grav_z=9.81d0
+Force1 = rho_s*A_s*L_s*grav_z
+q = Force1/L_s
+Inercia = pi*(De_s**4 - Di_s**4)/64
+dzin = (5*q*(L_s**4))/(384*E_s*Inercia)
+
+! Loop sobre nel e nlgeom_options
+*DIM, nels, ARRAY, 5
+*DIM, nlgeom_options, ARRAY, 2
+nels(1) = 2
+nels(2) = 10
+nels(3) = 20
+nels(4) = 50
+nels(5) = 100
+nlgeom_options(1) = 0
+nlgeom_options(2) = 1
+
+*DO, i, 1, 5
+    *DO, j, 1, 2
+        nel = nels(i)
+        nlgeom_option = nlgeom_options(j)
+
+        ! Limpar o modelo antes de iniciar uma nova iteração
+        /CLEAR, NOSTART
+        /PREP7 
+
+        !!!!!!!!!!!!!!! BEgin Modeling !!!!!!!!!!!!!!!!!
+        k,1,0,0,0
+        k,2,L_s,0,0
+        L,1,2
+
+        matpipe=1
+        MP,EX,matpipe,E_s 
+        MP,PRXY,matpipe,,0.3 
+
+        ET,1,PIPE288
+        SECTYPE,1,PIPE, ,riser 
+        SECDATA,De_s,Thic_riser,12,0,1,0,0,0, 
+        KEYOPT,1,1,1                       ! Thick pipe
+
+        Esize_riser=L_s/nel
+        LESIZE,1,Esize_riser, , , , , , ,1
+        Lmesh,ALL 
+
+        D, 1, ALL, 0                            ! Condição de contorno: deslocamento zero em X,Y,Z no nó 1
+        D, 2, ALL, 0                            ! Condição de contorno: deslocamento zero em X,Y,Z no nó 2
+
+        noc=NODE(L_s/2,0,0)  ! Defina o nó de interesse
+
+        FINISH
+
+        !...................SOLUTION......................
+        /SOLU
+
+        SFBEAM,ALL,5,PRES,q,q, , , , ,0 
+
+        ANTYPE,0                                 ! Static Analysis
+        NLGEOM,nlgeom_option                     ! Large displacement
+
+        SAVE
+        SOLVE
+
+        FINISH
+
+        /POST1
+
+        NSEL, S, NODE, , noc
+
+        ! Imprimir os deslocamentos no nó 'noc'
+        *GET, disp_x, NODE, noc, U, X
+        *GET, disp_y, NODE, noc, U, Y
+        *GET, disp_z, NODE, noc, U, Z
+
+        ! Salvar deslocamentos em CSV
+        *CFOPEN, displacements_nel_%nel%_nlgeom_%nlgeom_option%, csv
+        *VWRITE, noc, disp_x, disp_y, disp_z
+        ('%8d, %12.5e, %12.5e, %12.5e')
+        *CFCLOSE
+
+        ! Salvar o modelo após a solução
+        SAVE, riser_model_nel_%nel%_nlgeom_%nlgeom_option%_after_solve
+        FINISH
+
+        ! Instruções para abrir no ANSYS MAPDL
+        /COM, Para visualizar os resultados no ANSYS MAPDL, use os seguintes comandos:
+        /COM, 1. RESUME,'riser_model_nel_%nel%_nlgeom_%nlgeom_option%_after_solve','db'
+        /COM, 2. /POST1
+        /COM, 3. SET,1,1
+        /COM, 4. PLDISP
+
+    *ENDDO
+*ENDDO
+
+! Encerrar o MAPDL corretamente
+/EXIT, NOSTART

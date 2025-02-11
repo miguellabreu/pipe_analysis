@@ -1,0 +1,63 @@
+# ANSYS temporary and output files
+.__tmp__.*
+*.log
+*.err
+*.db
+*.rst
+*.out
+*.inp
+*.mntr
+*.stat
+*.lock
+file.*
+*.full
+*.osave
+*.esave
+*.PAGE
+*.png
+*.gif
+*.jpg
+*.DSP
+*.dis
+*.cnd
+*.bout
+*.dat
+*.mlv
+*.dbb
+*.set
+
+# Python related
+__pycache__/
+*.py[cod]
+*.so
+.Python
+env/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*/.ipynb_checkpoints/*
+
+# CSV files (if you want to exclude result data)
+*.csv
+
+# VSCode
+.vscode/
+*.code-workspace
+
+# Operating System
+.DS_Store
+Thumbs.db

@@ -1,0 +1,74 @@
+!!!!!!!!!!!!!!!!! Parameters !!!!!!!!!!!!!!!!!
+rho_s = 7000.d0 ! riser density kg/m3
+L_s= 30.d0      ! riser length 30m
+De_s = 0.20d0   ! riser outer diameter 20mm
+Di_s = 0.12d0   ! riser inner diameter   
+E_s = 100.0d9   ! riser Young modulus
+
+Thic_riser = (De_s - Di_s)/2
+
+pi=3.1416
+A_s = 0.25*pi*(De_s**2 - Di_s**2)
+grav_z=9.81d0
+Force1 = rho_s*A_s*L_s*grav_z
+q = Force1/L_s
+Inercia = pi*(De_s**4 - Di_s**4)/64
+dzin = (5*q*(L_s**4))/(384*E_s*Inercia)          ! deslocamento linear exato
+
+
+!!!!!!!!!!!!!!!!! BEgin Modeling !!!!!!!!!!!!!!!!!
+/PREP7 
+
+k,1,0,0,0
+k,2,L_s,0,0
+L,1,2
+
+matpipe=1
+MP,EX,matpipe,E_s 
+MP,PRXY,matpipe,,0.3 
+
+ET,1,PIPE288
+SECTYPE,1,PIPE, ,riser 
+SECDATA,De_s,Thic_riser,12,0,1,0,0,0, 
+KEYOPT,1,1,1                       ! Thick pipe
+
+Esize_riser=L_s/100    !  nel=[2,10,20,50,100]
+LESIZE,1,Esize_riser, , , , , , ,1
+Lmesh,ALL 
+
+
+noc=NODE(L_s/2,0,0)  ! Defina o nó de interesse
+
+FINISH
+
+!...................SOLUTION......................
+/SOLU
+ANTYPE,0                                 ! Static Analysis
+NLGEOM,0                                 ! Large displacement
+
+DK, 1, ALL, 0                            ! Condição de contorno: deslocamento zero em X no nó 1
+DK, 2, ALL, 0                            ! Condição de contorno: deslocamento zero em X no nó 2
+
+fj = -(Force1 / L_s) * Esize_riser       ! Carga concentrada em cada nó
+
+F, ALL, FY, fj                       ! Aplica a carga concentrada no nó selecionado (na direção Y)
+
+
+
+SAVE
+SOLVE
+FINISH
+
+/POST1
+
+NSEL, S, NODE, , noc
+
+! Imprimir os deslocamentos no nó 'noc'
+PRNSOL, DISP, X                ! Deslocamento na direção X
+PRNSOL, DISP, Y                ! Deslocamento na direção Y
+PRNSOL, DISP, Z                ! Deslocamento na direção Z
+
+! deslocamento total 
+!*GET, disp_total, NODE, noc, U, SUM
+!*VWRITE, disp_total
+!('%8.4f')
