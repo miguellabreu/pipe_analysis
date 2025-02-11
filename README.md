@@ -12,10 +12,6 @@ Este repositório contém uma análise estrutural de um tubo usando ANSYS APDL, 
 - **Diâmetro interno:** 0.12 m
 - **Módulo de Young:** 100 GPa
 
-## Estrutura
-- `src/`: Códigos fonte
-- `results/`: Resultados das simulações
-- `docs/`: Documentação
 
 ## Requisitos
 - Python 3.8+
